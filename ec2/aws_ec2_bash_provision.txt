@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# update the system and install php and apache
+yum update -y
+yum install httpd -y
+yum install php -y
+service httpd start
+chkconfig httpd on
+
+# also install a tool to stress test this instance
+yum install stress -y
+
+# save this instance's public ip address into /var/www/html/ip.txt
+curl http://169.254.169.254/latest/meta-data/public-ipv4 > /var/www/html/ip.txt
+
+# generate a random rgb color and save into /var/www/html/rgb.txt
+rr=$(shuf -i0-255 -n1); gg=$(shuf -i0-255 -n1); bb=$(shuf -i0-255 -n1); rgb="rgb("$rr","$gg","$bb")"; echo $rgb > /var/www/html/rgb.txt
+
+# copy our sample index.php from the s3 bucket
+aws s3 cp s3://BUCKET_NAME_HERE/aws_ec2_sample_index.php /var/www/html/index.php --region eu-central-1
+
+# required by the AWS EC2 Classic Load Balancer
+touch /var/www/html/healthcheck.html
